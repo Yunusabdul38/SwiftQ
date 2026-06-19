@@ -1,0 +1,33 @@
+[workspace]
+resolver = "2"
+members = [
+    "packages/contracts/quiz-pool",
+    "packages/contracts/leaderboard",
+    "packages/relayer",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+license      = "MIT"
+repository   = "https://github.com/your-org/swiftq"
+authors      = ["SwiftQ Contributors"]
+
+[workspace.dependencies]
+# Soroban SDK (contracts)
+soroban-sdk       = { version = "22.0.0", features = ["testutils"] }
+
+# Relayer (Axum web server)
+axum              = "0.7"
+tokio             = { version = "1", features = ["full"] }
+tower             = "0.4"
+tower-http        = { version = "0.5", features = ["cors", "trace"] }
+serde             = { version = "1", features = ["derive"] }
+serde_json        = "1"
+tracing           = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenvy           = "0.15"
+reqwest           = { version = "0.12", features = ["json"] }
+stellar-sdk       = "0.1"   # community Stellar Rust client
+anyhow            = "1"
+thiserror         = "1"
