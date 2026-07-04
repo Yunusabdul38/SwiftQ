@@ -24,3 +24,9 @@ Thumbs.db
 .vscode/
 *.suo
 *.user
+
+# ─── Test Files ────────────────────────────────────────────────────────────────
+test_snapshots/
+*test.json
+*.test.json
+

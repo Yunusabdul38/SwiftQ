@@ -15,7 +15,7 @@ authors      = ["SwiftQ Contributors"]
 
 [workspace.dependencies]
 # Soroban SDK (contracts)
-soroban-sdk       = { version = "22.0.0", features = ["testutils"] }
+soroban-sdk       = { version = "22.0.0" }
 
 # Relayer (Axum web server)
 axum              = "0.7"
