@@ -39,9 +39,6 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install Soroban CLI
-        run: cargo install --locked soroban-cli --features opt
-
       - name: Check formatting
         run: cargo fmt --all -- --check
 
@@ -50,3 +47,7 @@ jobs:
 
       - name: Run contract tests
         run: cargo test --workspace
+
+      - name: Build contracts (WASM)
+        run: cargo build --target wasm32-unknown-unknown --release --package swiftq-leaderboard --package swiftq-quiz-pool
+

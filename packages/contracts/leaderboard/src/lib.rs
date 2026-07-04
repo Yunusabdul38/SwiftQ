@@ -28,11 +28,13 @@ impl LeaderboardContract {
             panic!("already initialized");
         }
         env.storage().instance().set(&DataKey::Admin, &admin);
-        
+
         // Initialize the players list if it doesn't exist
         if !env.storage().persistent().has(&DataKey::Players) {
             let empty_players: Vec<Address> = Vec::new(&env);
-            env.storage().persistent().set(&DataKey::Players, &empty_players);
+            env.storage()
+                .persistent()
+                .set(&DataKey::Players, &empty_players);
         }
     }
 
@@ -41,14 +43,26 @@ impl LeaderboardContract {
         admin.require_auth();
 
         let stats_key = DataKey::Stats(player.clone());
-        let stats = if let Some(mut existing_stats) = env.storage().persistent().get::<_, PlayerStats>(&stats_key) {
-            existing_stats.total_score = existing_stats.total_score.checked_add(score).expect("score overflow");
-            existing_stats.rounds_played = existing_stats.rounds_played.checked_add(1).expect("rounds overflow");
+        let stats = if let Some(mut existing_stats) =
+            env.storage().persistent().get::<_, PlayerStats>(&stats_key)
+        {
+            existing_stats.total_score = existing_stats
+                .total_score
+                .checked_add(score)
+                .expect("score overflow");
+            existing_stats.rounds_played = existing_stats
+                .rounds_played
+                .checked_add(1)
+                .expect("rounds overflow");
             existing_stats.last_active_timestamp = env.ledger().timestamp();
             existing_stats
         } else {
             // New player, add to players list
-            let mut players: Vec<Address> = env.storage().persistent().get(&DataKey::Players).unwrap_or_else(|| Vec::new(&env));
+            let mut players: Vec<Address> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::Players)
+                .unwrap_or_else(|| Vec::new(&env));
             players.push_back(player.clone());
             env.storage().persistent().set(&DataKey::Players, &players);
 
@@ -69,15 +83,23 @@ impl LeaderboardContract {
     }
 
     pub fn get_top_players(env: Env, limit: u32) -> Vec<PlayerStats> {
-        let players: Vec<Address> = env.storage().persistent().get(&DataKey::Players).unwrap_or_else(|| Vec::new(&env));
+        let players: Vec<Address> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Players)
+            .unwrap_or_else(|| Vec::new(&env));
         let mut result = Vec::new(&env);
-        
+
         for player in players.iter() {
-            if let Some(stats) = env.storage().persistent().get::<_, PlayerStats>(&DataKey::Stats(player)) {
+            if let Some(stats) = env
+                .storage()
+                .persistent()
+                .get::<_, PlayerStats>(&DataKey::Stats(player))
+            {
                 result.push_back(stats);
             }
         }
-        
+
         // Bubble sort descending by total_score
         let len = result.len();
         if len > 1 {
@@ -92,19 +114,14 @@ impl LeaderboardContract {
                 }
             }
         }
-        
+
         // Take up to `limit` elements
         let mut limited_result = Vec::new(&env);
         let limit_usize = limit as usize;
-        let mut count = 0;
-        for stats in result.iter() {
-            if count >= limit_usize {
-                break;
-            }
+        for stats in result.iter().take(limit_usize) {
             limited_result.push_back(stats);
-            count += 1;
         }
-        
+
         limited_result
     }
 }
@@ -140,7 +157,7 @@ mod test {
     fn test_submit_score_accumulation() {
         let env = Env::default();
         env.mock_all_auths();
-        
+
         let admin = Address::generate(&env);
         let contract_id = env.register(LeaderboardContract, ());
         let client = LeaderboardContractClient::new(&env, &contract_id);
@@ -148,13 +165,13 @@ mod test {
         client.initialize(&admin);
 
         let player = Address::generate(&env);
-        
+
         // Submit score first time
         client.submit_score(&player, &100);
         let stats = client.get_player_score(&player).unwrap();
         assert_eq!(stats.total_score, 100);
         assert_eq!(stats.rounds_played, 1);
-        
+
         // Submit score second time
         client.submit_score(&player, &150);
         let stats = client.get_player_score(&player).unwrap();
@@ -167,7 +184,7 @@ mod test {
     fn test_unauthorized_submit_score() {
         let env = Env::default();
         // Do not call mock_all_auths to verify auth check panics
-        
+
         let admin = Address::generate(&env);
         let contract_id = env.register(LeaderboardContract, ());
         let client = LeaderboardContractClient::new(&env, &contract_id);
@@ -199,14 +216,14 @@ mod test {
 
         let top_players = client.get_top_players(&3);
         assert_eq!(top_players.len(), 3);
-        
+
         // Check order: player2 (150), player3 (100), player1 (50)
         assert_eq!(top_players.get(0).unwrap().address, player2);
         assert_eq!(top_players.get(0).unwrap().total_score, 150);
-        
+
         assert_eq!(top_players.get(1).unwrap().address, player3);
         assert_eq!(top_players.get(1).unwrap().total_score, 100);
-        
+
         assert_eq!(top_players.get(2).unwrap().address, player1);
         assert_eq!(top_players.get(2).unwrap().total_score, 50);
 
