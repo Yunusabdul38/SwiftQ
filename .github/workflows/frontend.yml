@@ -8,13 +8,20 @@ on:
       - 'packages/sdk/**'
       - 'packages/ui/**'
       - 'package.json'
+      - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
+      - '.github/workflows/frontend.yml'
   pull_request:
     paths:
       - 'apps/**'
       - 'packages/sdk/**'
       - 'packages/ui/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/frontend.yml'
 
 jobs:
   lint-typecheck-build:
@@ -47,11 +54,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Turborepo and Next.js builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.cache/turbo
+            apps/web/.next/cache
+            apps/admin/.next/cache
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Lint
         run: pnpm lint
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
       - name: Type check
         run: pnpm typecheck
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
       - name: Build all packages and apps
         run: pnpm build
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}

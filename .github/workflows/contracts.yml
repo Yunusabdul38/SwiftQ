@@ -7,11 +7,13 @@ on:
       - 'packages/contracts/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - '.github/workflows/contracts.yml'
   pull_request:
     paths:
       - 'packages/contracts/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - '.github/workflows/contracts.yml'
 
 env:
   CARGO_TERM_COLOR: always
@@ -30,24 +32,25 @@ jobs:
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
-      - name: Cache Cargo registry
+      - name: Cache Cargo registry and target
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-contracts-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-contracts-
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - name: Clippy (all targets)
-        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Clippy
+        run: cargo clippy --package swiftq-leaderboard --package swiftq-quiz-pool --all-targets -- -D warnings
 
       - name: Run contract tests
-        run: cargo test --workspace
+        run: cargo test --package swiftq-leaderboard --package swiftq-quiz-pool
 
       - name: Build contracts (WASM)
         run: cargo build --target wasm32-unknown-unknown --release --package swiftq-leaderboard --package swiftq-quiz-pool
-
